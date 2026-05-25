@@ -1,0 +1,18 @@
+# Cargo workspace for the HiGHS Rust bindings.
+#
+# Two crates:
+#   highs-sys  raw FFI over the C API (highs/interfaces/highs_c_api.h)
+#   highs      safe, idiomatic wrapper with a GIL-free parallel runtime
+#
+# This workspace builds *against* the HiGHS C API; it is additive and does not
+# touch the core C++ solver (see CONTRIBUTING.md upstream policy).
+[workspace]
+resolver = "2"
+members = ["highs-sys", "highs"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/ERGO-Code/HiGHS"
+rust-version = "1.70"

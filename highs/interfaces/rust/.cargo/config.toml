@@ -1,0 +1,7 @@
+# Local developer convenience for this checkout.
+#  * Build offline from the populated cargo cache.
+# The highs-sys build script auto-detects the repo's `build_on`/`build_off`
+# tree when neither HIGHS_DIR nor the `bundled`/`pkg-config` features apply,
+# so `cargo test --no-default-features` needs no environment variables here.
+[net]
+offline = true

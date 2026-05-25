@@ -1,0 +1,30 @@
+[package]
+name = "highs-sys"
+description = "Raw FFI bindings to the HiGHS optimization solver C API"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# Reserve the native `highs` library name so it is linked exactly once across
+# the dependency graph, and so build-script metadata is forwarded downstream.
+links = "highs"
+build = "build.rs"
+
+[features]
+# Build HiGHS from this repo's source via CMake, and generate bindings with
+# bindgen at build time. This is the self-contained default.
+default = ["bundled", "run-bindgen"]
+# Compile libhighs from source via the `cmake` crate.
+bundled = ["dep:cmake"]
+# Discover a prebuilt/system HiGHS via pkg-config (its `highs` module).
+pkg-config = ["dep:pkg-config"]
+# Run bindgen at build time (requires libclang). When disabled, the checked-in
+# pregenerated bindings are used instead (valid for the default HIGHSINT64=OFF,
+# i.e. HighsInt = i32, configuration).
+run-bindgen = ["dep:bindgen"]
+
+[build-dependencies]
+bindgen = { version = "0.72", optional = true }
+cmake = { version = "0.1", optional = true }
+pkg-config = { version = "0.3", optional = true }

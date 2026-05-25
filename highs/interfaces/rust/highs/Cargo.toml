@@ -1,0 +1,22 @@
+[package]
+name = "highs"
+description = "Safe, idiomatic Rust bindings to the HiGHS optimization solver with a GIL-free parallel runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+# Self-contained default: build libhighs from source and generate bindings.
+default = ["bundled"]
+# Compile HiGHS from source via CMake and run bindgen at build time.
+bundled = ["highs-sys/bundled", "highs-sys/run-bindgen"]
+# Discover a prebuilt/system HiGHS via pkg-config instead of building it.
+pkg-config = ["highs-sys/pkg-config"]
+# Convenience helpers for solving many models with rayon.
+rayon = ["dep:rayon"]
+
+[dependencies]
+highs-sys = { path = "../highs-sys", version = "0.1", default-features = false }
+rayon = { version = "1.11", optional = true }
