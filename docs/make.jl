@@ -100,6 +100,7 @@ Documenter.makedocs(
         ],
         "Parallel" => "parallel.md",
         "Solvers" => "solvers.md",
+        "Quantum heuristic (POC)" => "quantum.md",
         "Terminology" => "terminology.md",
     ],
 )

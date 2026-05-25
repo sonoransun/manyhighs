@@ -10,6 +10,7 @@
 #include <random>
 #include <sstream>
 
+
 #include "../extern/pdqsort/pdqsort.h"
 #include "lp_data/HighsModelUtils.h"
 #include "mip/HighsPseudocost.h"
@@ -72,6 +73,9 @@ std::string HighsMipSolverData::solutionSourceToString(
   } else if (solution_source == kSolutionSourceZiRound) {
     if (code) return "Z";
     return "ZI Round";
+  } else if (solution_source == kSolutionSourceQuantum) {
+    if (code) return "Q";
+    return "Quantum";
   } else if (solution_source == kSolutionSourceTrivialZ) {
     if (code) return "z";
     return "Trivial zero";

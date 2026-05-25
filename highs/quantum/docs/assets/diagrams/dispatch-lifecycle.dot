@@ -1,0 +1,44 @@
+// One quantum heuristic call from dispatch to incumbent acceptance.
+// Top-to-bottom timeline with the search thread on the left, worker on the right.
+digraph dispatch_lifecycle {
+  rankdir = TB;
+  graph [fontname = "Helvetica", labelloc = "t",
+         label = "Async dispatch lifecycle — one quantum call"];
+  node  [fontname = "Helvetica", shape = box, style = "rounded,filled"];
+  edge  [fontname = "Helvetica", fontsize = 10];
+
+  // Two columns: search thread (left), worker thread (right).
+  subgraph cluster_search {
+    label = "HiGHS search thread";
+    style = "rounded";
+    color = "gray60";
+    s_dive   [label = "dive-loop iteration", fillcolor = "#fef3c7"];
+    s_extract[label = "extractFromMip() or\nextractRinsNeighborhood()", fillcolor = "#fef3c7"];
+    s_write  [label = "write /tmp/highs_qubo_*.in.json", fillcolor = "#fef3c7"];
+    s_spawn  [label = "spawn std::thread\n(worker)", fillcolor = "#fef3c7"];
+    s_return [label = "return — search continues", fillcolor = "#fef3c7"];
+    s_later  [label = "later dive iteration:\nharvest()", fillcolor = "#fef3c7"];
+    s_check  [label = "PendingCall.done?\n(non-blocking)", fillcolor = "#fef3c7", shape = diamond];
+    s_parse  [label = "parseResult(out.json)", fillcolor = "#fef3c7"];
+    s_try    [label = "mipdata.trySolution(\n  assignment, kSolutionSourceQuantum)", fillcolor = "#fef3c7"];
+  }
+
+  subgraph cluster_worker {
+    label = "Worker std::thread (I/O-bound)";
+    style = "rounded";
+    color = "gray60";
+    w_run   [label = "std::system(python -m\nhighspy_quantum solve …)", fillcolor = "#dbeafe"];
+    w_subproc [label = "subprocess:\n• decode_input(in.json)\n• structure.detect()\n• backend.solve(bqm)\n• repair if infeasible\n• encode_result(out.json)", fillcolor = "#dbeafe"];
+    w_done  [label = "PendingCall.done = true\n(release-store)", fillcolor = "#dbeafe"];
+  }
+
+  s_dive   -> s_extract -> s_write -> s_spawn -> s_return;
+  s_spawn  -> w_run [style = "dashed", color = "#dc2626", label = "  start"];
+  w_run    -> w_subproc -> w_done;
+
+  s_later  -> s_check;
+  s_check  -> s_parse   [label = "yes"];
+  s_check  -> s_later   [label = "no (skip)", style = "dashed"];
+  s_parse  -> s_try;
+  w_done   -> s_check   [style = "dashed", color = "#16a34a", label = "  acquire-load"];
+}

@@ -297,6 +297,15 @@ set(hipo_orderings_sources
     ../extern/metis/libmetis/wspace.c
     ../extern/rcm/rcm.cpp)
 
+set(quantum_sources
+    quantum/HighsQubo.cpp
+    quantum/HighsQuantumHeuristic.cpp)
+
+set(quantum_headers
+    quantum/HighsQubo.h
+    quantum/HighsQuantumHeuristic.h
+    quantum/HighsQuantumOptions.h)
+
 set(hipo_orderings_headers
     ../extern/amd/amd_internal.h
     ../extern/amd/amd.h

@@ -1,0 +1,28 @@
+// Decision tree for extraction mode selection.
+digraph extraction_paths {
+  rankdir = TB;
+  graph [fontname = "Helvetica", labelloc = "t",
+         label = "Extraction mode selection (HighsMipSolverData::quantumHeuristic)"];
+  node  [fontname = "Helvetica", style = "rounded,filled"];
+  edge  [fontname = "Helvetica", fontsize = 10];
+
+  start [label = "quantumHeuristic() called", shape = oval, fillcolor = "#dbeafe"];
+  mode  [label = "options.mip_quantum_heuristic_mode\n== \"rins\" ?", shape = diamond, fillcolor = "#fef3c7"];
+  has_inc [label = "incumbent.empty() ?", shape = diamond, fillcolor = "#fef3c7"];
+  rins    [label = "extractRinsNeighborhood\n  (mipdata, max_vars,\n   mip_feasibility_tolerance)", shape = box, fillcolor = "#dcfce7"];
+  fallback [label = "(RINS returned non-kOk reason)\nfall back to:\nextractFromMip", shape = box, fillcolor = "#fee2e2"];
+  whole   [label = "extractFromMip\n  (mipdata, max_vars)", shape = box, fillcolor = "#dcfce7"];
+  dispatch [label = "toJson()  →  dispatch async", shape = box, fillcolor = "#dbeafe"];
+  skip    [label = "log \"skipped: …\"\nreturn", shape = box, fillcolor = "#fee2e2"];
+
+  start    -> mode;
+  mode     -> has_inc [label = "yes"];
+  mode     -> whole   [label = "no (or \"whole\")"];
+  has_inc  -> rins    [label = "no"];
+  has_inc  -> whole   [label = "yes (no anchor)"];
+  rins     -> fallback [label = "reason != kOk", style = "dashed"];
+  rins     -> dispatch [label = "reason == kOk"];
+  fallback -> whole;
+  whole    -> dispatch [label = "reason == kOk"];
+  whole    -> skip     [label = "reason != kOk", style = "dashed"];
+}

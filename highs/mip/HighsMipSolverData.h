@@ -9,7 +9,12 @@
 #ifndef HIGHS_MIP_SOLVER_DATA_H_
 #define HIGHS_MIP_SOLVER_DATA_H_
 
+#include <memory>
 #include <vector>
+
+#ifdef QUANTUM
+#include "quantum/HighsQuantumHeuristic.h"
+#endif
 
 #include "mip/HighsCliqueTable.h"
 #include "mip/HighsConflictPool.h"
@@ -58,6 +63,7 @@ enum MipSolutionSource : int {
   kSolutionSourceUserSolution,        // X
   kSolutionSourceHighsSolution,       // Y
   kSolutionSourceZiRound,             // Z
+  kSolutionSourceQuantum,             // Q (quantum heuristic, gated by QUANTUM)
   kSolutionSourceTrivialL,            // l
   kSolutionSourceTrivialP,            // p
   kSolutionSourceTrivialU,            // u
@@ -219,6 +225,17 @@ struct HighsMipSolverData {
   bool solutionRowFeasible(const std::vector<double>& solution) const;
   HighsModelStatus feasibilityJump();
   HighsModelStatus trivialHeuristics();
+#ifdef QUANTUM
+  // Quantum primal heuristic. Extracts a QUBO-formulated subproblem from the
+  // current MIP state, dispatches it asynchronously to a Python backend
+  // (selected by the mip_quantum_heuristic option), and submits any
+  // previously-returned candidates via trySolution(). Always returns
+  // kNotset — never asserts infeasibility.
+  HighsModelStatus quantumHeuristic();
+  // Non-blocking poll for completed quantum subprocess calls. Called from the
+  // dive loop alongside other primal heuristics.
+  void harvestQuantumResults();
+#endif
 
   void startAnalyticCenterComputation(
       const highs::parallel::TaskGroup& taskGroup);
@@ -308,6 +325,14 @@ struct HighsMipSolverData {
   void terminatorTerminate();
   bool terminatorTerminated() const;
   void terminatorReport() const;
+
+#ifdef QUANTUM
+  // Lazily allocated on first quantumHeuristic() call. Joins all in-flight
+  // worker threads in its destructor.
+  std::unique_ptr<highs_quantum::HighsQuantumHeuristic> quantum_heuristic_;
+  // Dive counter for the mip_quantum_node_frequency gate.
+  HighsInt quantum_dive_counter_ = 0;
+#endif
 };
 
 #endif

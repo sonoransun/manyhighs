@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "highspy-quantum"
+version = "0.1.0"
+description = "Quantum-assisted MIP heuristics for HiGHS"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "HiGHS quantum heuristic POC" }]
+license = { text = "MIT" }
+dependencies = ["numpy>=1.22"]
+
+[project.optional-dependencies]
+dwave = ["dwave-ocean-sdk>=6"]
+qiskit = ["qiskit>=1.0", "qiskit-optimization>=0.6", "qiskit-aer>=0.13"]
+rigetti = ["pyquil>=4"]
+braket = ["amazon-braket-sdk>=1.60"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+"highs-quantum" = "highspy_quantum.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["highspy_quantum*"]

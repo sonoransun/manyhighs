@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "num_vars": 6,
+  "num_rows": 0,
+  "sense_multiplier": 1.0,
+  "constant_offset": 0.0,
+  "linear": [-1.0, -2.0, -3.0, -1.0, -2.0, -3.0],
+  "lower": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "upper": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+  "original_indices": [0, 1, 2, 3, 4, 5],
+  "row_start": [0],
+  "col_index": [],
+  "coef_value": [],
+  "row_lower": [],
+  "row_upper": [],
+  "seed_full_solution": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "structure_tag": ""
+}

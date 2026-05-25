@@ -1,0 +1,50 @@
+// High-level architecture: three layers + the subprocess boundary.
+// Rendered as architecture.svg via `dot -Tsvg architecture.dot -o architecture.svg`.
+digraph architecture {
+  rankdir = TB;
+  graph [fontname = "Helvetica", labelloc = "t", label = "highs/quantum/ — three layers, one subprocess boundary"];
+  node  [fontname = "Helvetica", shape = box, style = "rounded,filled", fillcolor = "#f5f5f5"];
+  edge  [fontname = "Helvetica", fontsize = 10];
+
+  subgraph cluster_cli {
+    label = "CLI (end-user)";
+    style = "rounded,dashed";
+    color = "gray60";
+    cli [label = "highs-quantum solve \n     model.mps --backend …", fillcolor = "#dbeafe"];
+    bench [label = "highs-quantum benchmark \n     model.mps --backends …", fillcolor = "#dbeafe"];
+  }
+
+  subgraph cluster_python {
+    label = "Python package — highspy_quantum";
+    style = "rounded,dashed";
+    color = "gray60";
+    structure [label = "structure.detect()\n+ specialized BQM builders"];
+    model_py  [label = "model.py\n  • MipSubproblem\n  • generic penalty Bqm builder"];
+    repair    [label = "repair.py\n  greedy round-and-repair"];
+    backends  [label = "backends/\n  classical | exact\n  dwave | qiskit\n  rigetti | braket"];
+  }
+
+  subgraph cluster_cpp {
+    label = "C++ MIP heuristic — built only when QUANTUM=ON";
+    style = "rounded,dashed";
+    color = "gray60";
+    mip       [label = "HighsMipSolver\n(dive loop)", fillcolor = "#fef3c7"];
+    heuristic [label = "HighsQuantumHeuristic\n  • dispatch() — fire-and-forget\n  • harvest() — non-blocking poll"];
+    qubo      [label = "HighsQubo\n  • extractFromMip()\n  • extractRinsNeighborhood()\n  • toJson / parseResult"];
+  }
+
+  // Edges
+  cli   -> structure   [label = "  reads input"];
+  bench -> structure;
+
+  mip       -> heuristic     [label = "per-dive trigger"];
+  heuristic -> qubo          [label = "build subproblem"];
+  heuristic -> cli           [label = "subprocess: python -m highspy_quantum solve\n--in /tmp/*.in.json --out /tmp/*.out.json", style = "dashed", color = "#dc2626", fontcolor = "#dc2626"];
+
+  structure -> model_py      [label = "fallback if no\n  structure match"];
+  structure -> backends      [label = "specialized BQM", color = "#16a34a"];
+  model_py  -> backends;
+  backends  -> repair        [label = "if infeasible"];
+  repair    -> heuristic     [label = "result JSON", style = "dashed", color = "#dc2626", fontcolor = "#dc2626"];
+  heuristic -> mip           [label = "trySolution()"];
+}

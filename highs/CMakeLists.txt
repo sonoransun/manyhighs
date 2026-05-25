@@ -12,6 +12,11 @@ if(HIPO)
   set(headers ${headers} ${hipo_headers} ${factor_highs_headers} ${hipo_util_headers} ${hipo_orderings_headers})
 endif()
 
+if(QUANTUM)
+  set(sources ${sources} ${quantum_sources})
+  set(headers ${headers} ${quantum_headers})
+endif()
+
 # Configure the config windows version file
 if(MSVC)
   string(REPLACE "." ","  PROJECT_RC_VERSION "${PROJECT_VERSION}")
@@ -224,6 +229,17 @@ else()
     endif()
 
   target_include_directories(highs PRIVATE ${include_dirs})
+
+  # Optional QUANTUM heuristic — gated by the QUANTUM CMake option.
+  # Activates the #ifdef QUANTUM blocks in HighsOptions.h, HighsMipSolver.cpp
+  # and pulls in the highs/quantum/ sources via sources.cmake.
+  # The define MUST be PUBLIC: HighsOptions.h is exposed through the public
+  # API, so library + consumers must agree on the struct layout.
+  if (QUANTUM)
+    target_compile_definitions(highs PUBLIC QUANTUM)
+    target_include_directories(highs PRIVATE
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/highs/quantum>)
+  endif()
 
   # Optional HIPO
   if (HIPO)

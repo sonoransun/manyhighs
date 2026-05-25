@@ -1,0 +1,9 @@
+# Solve a 6-var QUBO with two backends
+
+$ highs-quantum solve sample_qubo.json --backend classical --time-limit 2
+backend=classical ok=True objective=-12 wall_time=0.406s 
+assignment: 1 1 1 1 1 1
+
+$ highs-quantum solve sample_qubo.json --backend exact
+backend=exact ok=True objective=-12 wall_time=0.000396s 
+assignment: 1 1 1 1 1 1

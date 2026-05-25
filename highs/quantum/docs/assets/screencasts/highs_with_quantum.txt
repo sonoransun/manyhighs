@@ -1,0 +1,15 @@
+# HiGHS solve with the quantum heuristic enabled
+
+$ cat q.txt
+mip_quantum_heuristic = classical
+quantum_python_executable = /root/cdev/manyhighs/highs/quantum/python/.venv/bin/python
+quantum_time_limit = 1.0
+
+$ highs maxcut5.mps --options_file q.txt
+Set option mip_quantum_heuristic to "classical"
+     Z => ZI Round; Q => Quantum; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+Quantum heuristic: dispatching classical (vars=15, rows=40, in_flight=1)
+Quantum heuristic: dispatching classical (vars=15, rows=40, in_flight=2)
+  Status            Optimal
+  Primal bound      -6
+  Dual bound        -6

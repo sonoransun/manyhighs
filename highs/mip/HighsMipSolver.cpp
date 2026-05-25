@@ -174,6 +174,15 @@ restart:
         return;
       }
     }
+#ifdef QUANTUM
+    // Quantum heuristic — gated by mip_quantum_heuristic option ("off" by
+    // default). Submits a candidate primal via trySolution(); never asserts
+    // infeasibility, so we don't check its return status for kInfeasible.
+    if (options_mip_->mip_quantum_heuristic != "off" &&
+        !options_mip_->mip_quantum_heuristic.empty()) {
+      (void)mipdata_->quantumHeuristic();
+    }
+#endif
     // End of pre-root-node heuristics
     if (analysis_.analyse_mip_time && !submip)
       if (analysis_.analyse_mip_time & !submip)
@@ -298,6 +307,24 @@ restart:
 
           mipdata_->heuristics.flushStatistics();
           analysis_.mipTimerStop(kMipClockDivePrimalHeuristics);
+#ifdef QUANTUM
+          // Per-dive quantum heuristic. Harvests any results from earlier
+          // dispatches and (subject to mip_quantum_node_frequency) kicks off
+          // a fresh subprocess call. Dispatches are async — no blocking on
+          // the cloud round-trip.
+          if (options_mip_->mip_quantum_heuristic != "off" &&
+              !options_mip_->mip_quantum_heuristic.empty()) {
+            const HighsInt freq = options_mip_->mip_quantum_node_frequency;
+            const bool fire =
+                freq <= 0 ||
+                (mipdata_->quantum_dive_counter_++ % freq) == 0;
+            if (fire) {
+              (void)mipdata_->quantumHeuristic();
+            } else {
+              mipdata_->harvestQuantumResults();
+            }
+          }
+#endif
           if (mipdata_->terminatorTerminated()) {
             cleanupSolve();
             return;

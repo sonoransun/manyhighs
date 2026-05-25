@@ -1,0 +1,36 @@
+// Python-side solve pipeline inside _run_backend.
+digraph solve_pipeline {
+  rankdir = LR;
+  graph [fontname = "Helvetica", labelloc = "t",
+         label = "Python-side solve pipeline (cli._run_backend)"];
+  node  [fontname = "Helvetica", style = "rounded,filled"];
+  edge  [fontname = "Helvetica", fontsize = 10];
+
+  input    [label = "MipSubproblem\n(from JSON)", shape = oval, fillcolor = "#dbeafe"];
+  detect   [label = "structure.detect()", shape = diamond, fillcolor = "#fef3c7"];
+  spec_bqm [label = "reformulation.<tag>.build()\n  (set_partitioning, max_cut, …)", fillcolor = "#dcfce7"];
+  gen_bqm  [label = "build_bqm_from_subproblem()\n  (penalty method)", fillcolor = "#dcfce7"];
+  solve    [label = "backend.solve(bqm, time_limit)", fillcolor = "#dbeafe"];
+  pick     [label = "for each sample:\nfeasible?", shape = diamond, fillcolor = "#fef3c7"];
+  repair   [label = "repair.repair(sub, x)\n  greedy flip", fillcolor = "#fce7f3"];
+  best     [label = "select best by\n(feasibility, objective)", fillcolor = "#dbeafe"];
+  esc      [label = "all infeasible?", shape = diamond, fillcolor = "#fef3c7"];
+  doublepen [label = "penalty *= 2\nattempt < 4 ?", shape = diamond, fillcolor = "#fef3c7"];
+  out      [label = "encode_result()\n→ JSON", shape = oval, fillcolor = "#dbeafe"];
+
+  input  -> detect;
+  detect -> spec_bqm  [label = "tagged"];
+  detect -> gen_bqm   [label = "untagged"];
+  spec_bqm -> solve;
+  gen_bqm  -> solve;
+  solve  -> pick;
+  pick   -> repair    [label = "no"];
+  pick   -> best      [label = "yes"];
+  repair -> best      [label = "ok"];
+  repair -> esc       [label = "still infeasible"];
+  esc    -> doublepen [label = "yes"];
+  esc    -> best      [label = "no (give up)"];
+  doublepen -> gen_bqm [label = "yes (retry)"];
+  doublepen -> best   [label = "no (return last)"];
+  best   -> out;
+}

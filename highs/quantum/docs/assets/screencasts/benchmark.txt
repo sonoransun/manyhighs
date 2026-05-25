@@ -1,0 +1,7 @@
+# Cross-backend benchmark on the sample QUBO
+
+$ highs-quantum benchmark sample_qubo.json --backends classical,exact --time-limit 1
+| backend | ok | objective | wall_time | error |
+|---|---|---|---|---|
+| classical | ✓ | -12 | 0.208s |  |
+| exact | ✓ | -12 | 0.000314s |  |

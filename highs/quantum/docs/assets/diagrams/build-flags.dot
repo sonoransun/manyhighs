@@ -1,0 +1,24 @@
+// QUANTUM build option propagation.
+digraph build_flags {
+  rankdir = TB;
+  graph [fontname = "Helvetica", labelloc = "t",
+         label = "QUANTUM=ON build flag propagation"];
+  node  [fontname = "Helvetica", style = "rounded,filled"];
+  edge  [fontname = "Helvetica", fontsize = 10];
+
+  user    [label = "cmake -S . -B build -DQUANTUM=ON", shape = oval, fillcolor = "#dbeafe"];
+  top     [label = "CMakeLists.txt\n  option(QUANTUM …)\n  fatal_error if !FAST_BUILD", fillcolor = "#fef3c7"];
+  src     [label = "cmake/sources.cmake\n  quantum_sources, quantum_headers", fillcolor = "#fef3c7"];
+  hicml   [label = "highs/CMakeLists.txt\n  if(QUANTUM) append to sources\n  target_compile_definitions(highs PUBLIC QUANTUM)\n  target_include_directories(quantum/)", fillcolor = "#fef3c7"];
+  pub     [label = "PUBLIC define propagates to:\n• highs library object files\n• highs-bin executable\n• every consumer linking against highs", fillcolor = "#dcfce7"];
+  hdr     [label = "HighsOptions.h #ifdef QUANTUM\n  • new fields: mip_quantum_*\n  • new option records", fillcolor = "#dcfce7"];
+  data    [label = "HighsMipSolverData.h #ifdef QUANTUM\n  • includes HighsQuantumHeuristic.h\n  • unique_ptr<HighsQuantumHeuristic>\n  • quantum_dive_counter_", fillcolor = "#dcfce7"];
+  hooks   [label = "HighsMipSolver.cpp #ifdef QUANTUM blocks\n  • pre-root hook\n  • dive-loop hook (per-dive)", fillcolor = "#dcfce7"];
+  abi     [label = "ABI consistency:\nstruct layout identical across\nall consumers (avoid Sprint-0 segfault)", shape = note, fillcolor = "#fee2e2"];
+
+  user -> top -> src -> hicml -> pub;
+  pub  -> hdr;
+  pub  -> data;
+  pub  -> hooks;
+  pub  -> abi  [style = "dashed"];
+}

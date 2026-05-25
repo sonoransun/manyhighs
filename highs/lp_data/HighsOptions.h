@@ -277,6 +277,18 @@ const string kPdlpString = "pdlp";
 const string kQpAsmString = "qpasm";
 const string kHiPdlpString = "hipdlp";
 
+#ifdef QUANTUM
+// QUANTUM heuristic option strings. "off" disables, otherwise the value selects
+// the Python backend invoked by highs/quantum/HighsQuantumHeuristic.cpp.
+const string kQuantumHeuristicString = "mip_quantum_heuristic";
+const string kQuantumTimeLimitString = "quantum_time_limit";
+const string kQuantumPythonString = "quantum_python_executable";
+const string kQuantumExtraArgsString = "quantum_extra_args";
+const string kQuantumHeuristicOff = "off";
+const string kQuantumHeuristicClassical = "classical";
+const string kQuantumHeuristicExact = "exact";
+#endif
+
 const HighsInt kKeepNRowsDeleteRows = -1;
 const HighsInt kKeepNRowsDeleteEntries = 0;
 const HighsInt kKeepNRowsKeepRows = 1;
@@ -506,6 +518,19 @@ struct HighsOptionsStruct {
   HighsInt mip_lifting_for_probing;
   bool mip_allow_cut_separation_at_nodes;
 
+#ifdef QUANTUM
+  // QUANTUM heuristic options. "off" disables it; any other value names the
+  // Python backend (e.g. "classical", "exact", "dwave", "qiskit", "rigetti").
+  std::string mip_quantum_heuristic;
+  double quantum_time_limit;
+  std::string quantum_python_executable;
+  std::string quantum_extra_args;
+  HighsInt mip_quantum_node_frequency;
+  // Extraction mode: "whole" forwards the whole MIP, "rins" extracts a RINS-
+  // style sub-MIP around the current LP relaxation and incumbent.
+  std::string mip_quantum_heuristic_mode;
+#endif
+
   // Logging callback identifiers
   HighsLogOptions log_options;
   virtual ~HighsOptionsStruct() {}
@@ -668,7 +693,17 @@ struct HighsOptionsStruct {
         mip_root_presolve_only(false),
         mip_lifting_for_probing(-1),
         // clang-format off
-        mip_allow_cut_separation_at_nodes(true) {};
+        mip_allow_cut_separation_at_nodes(true)
+#ifdef QUANTUM
+        ,
+        mip_quantum_heuristic(""),
+        quantum_time_limit(0.0),
+        quantum_python_executable(""),
+        quantum_extra_args(""),
+        mip_quantum_node_frequency(0),
+        mip_quantum_heuristic_mode("")
+#endif
+        {};
   // clang-format on
 };
 
@@ -1240,6 +1275,50 @@ class HighsOptions : public HighsOptionsStruct {
                                        "Use the Shifting heuristic", advanced,
                                        &mip_heuristic_run_shifting, false);
     records.push_back(record_bool);
+
+#ifdef QUANTUM
+    record_string = new OptionRecordString(
+        kQuantumHeuristicString,
+        "Quantum MIP heuristic backend: \"off\" (default), \"classical\", "
+        "\"exact\", \"dwave\", \"qiskit\", \"rigetti\", \"braket\". Dispatches "
+        "QUBO-formulated subproblems to the named Python backend",
+        advanced, &mip_quantum_heuristic, kQuantumHeuristicOff);
+    records.push_back(record_string);
+
+    record_double = new OptionRecordDouble(
+        kQuantumTimeLimitString,
+        "Per-call time limit (seconds) for the quantum heuristic subprocess",
+        advanced, &quantum_time_limit, 0.0, 30.0, kHighsInf);
+    records.push_back(record_double);
+
+    record_string = new OptionRecordString(
+        kQuantumPythonString,
+        "Python interpreter used to invoke the quantum heuristic backend",
+        advanced, &quantum_python_executable, "python3");
+    records.push_back(record_string);
+
+    record_string = new OptionRecordString(
+        kQuantumExtraArgsString,
+        "Extra command-line arguments passed verbatim to the quantum heuristic "
+        "Python subprocess (whitespace-separated)",
+        advanced, &quantum_extra_args, "");
+    records.push_back(record_string);
+
+    record_int = new OptionRecordInt(
+        "mip_quantum_node_frequency",
+        "Fire the quantum heuristic every N dive cycles. 0 = every time "
+        "moreHeuristicsAllowed() allows. Higher N means fewer dispatches.",
+        advanced, &mip_quantum_node_frequency, 0, 0, kHighsIInf);
+    records.push_back(record_int);
+
+    record_string = new OptionRecordString(
+        "mip_quantum_heuristic_mode",
+        "Extraction mode: \"whole\" forwards the whole MIP; \"rins\" "
+        "extracts a sub-MIP around the LP relaxation and current incumbent. "
+        "Default is whole.",
+        advanced, &mip_quantum_heuristic_mode, "whole");
+    records.push_back(record_string);
+#endif
 
     record_bool = new OptionRecordBool(
         "mip_allow_cut_separation_at_nodes",
